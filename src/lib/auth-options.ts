@@ -52,8 +52,6 @@ export const authOptions: AuthOptions = {
     }
   },
   debug: process.env.NODE_ENV === 'development',
-  // Use NEXTAUTH_URL in production, fallback to localhost in development
-  basePath: '/api/auth',
   pages: {
     signIn: '/login',
     error: '/login'
