@@ -98,7 +98,12 @@ export async function POST(request: Request) {
     if (existingItem) {
       // If it exists, remove it (toggle off)
       await prisma.wishlistItem.delete({
-        where: { id: existingItem.id }
+        where: {
+          userId_productId: {
+            userId: user.id,
+            productId: productId
+          }
+        }
       });
       
       return NextResponse.json({ added: false });
