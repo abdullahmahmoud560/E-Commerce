@@ -6,16 +6,21 @@ import toast from 'react-hot-toast';
 import { ShoppingCart } from 'lucide-react';
 
 interface AddToCartButtonProps {
-  productId: string;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;  // Add this line
+  };
   inStock: boolean;
 }
 
-export default function AddToCartButton({ productId, inStock }: AddToCartButtonProps) {
+export default function AddToCartButton({ product, inStock }: AddToCartButtonProps) {
   const [isPending, startTransition] = useTransition();
 
   const handleAddToCart = () => {
     startTransition(async () => {
-      const result = await addToCart(productId);
+      const result = await addToCart(product); // نرسل الكائن الكامل
       if (result.success) {
         toast.success('Added to cart!');
       } else {

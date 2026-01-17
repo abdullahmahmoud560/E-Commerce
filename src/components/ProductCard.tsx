@@ -1,9 +1,9 @@
 // src/components/ProductCard.tsx
 'use client';
 
-import { Product } from '@/types';
-import { addToCart } from '@/actions/cart';
-import { toggleWishlist } from '@/actions/wishlist';
+import { Product } from '../types';
+import { addToCart } from '../actions/cart';
+import { toggleWishlist } from '../actions/wishlist';
 import { Heart, Star } from 'lucide-react';
 import React, { useState, useTransition, ReactElement } from 'react';
 import toast from 'react-hot-toast';
@@ -20,11 +20,11 @@ export default function ProductCard({ product, inWishlist = false }: ProductCard
 
   const handleAddToCart = () => {
     startTransition(async () => {
-      const result = await addToCart(product.id);
+      const result = await addToCart(product);
       if (result.success) {
-        toast.success('Added to cart!');
+        toast.success('تمت الإضافة إلى السلة بنجاح');
       } else {
-        toast.error(result.message || 'Failed to add to cart');
+        toast.error(result.message || 'فشلت إضافة المنتج إلى السلة');
       }
     });
   };

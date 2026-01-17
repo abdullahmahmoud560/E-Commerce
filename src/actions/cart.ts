@@ -1,94 +1,59 @@
-// src/actions/cart.ts
 'use server';
 
-import { redis } from '@/lib/redis';
 import { revalidatePath } from 'next/cache';
 
-export async function addToCart(productId: string, quantity: number = 1) {
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  quantity: number;
+}
+
+let cart: CartItem[] = [];
+
+export async function addToCart(product: Omit<CartItem, 'quantity'>) {
   try {
-    // Get current cart
-    const cart = await redis.hgetall<Record<string, number>>('cart:guest') || {};
+    const existingItem = cart.find(item => item.id === product.id);
     
-    // Add or update quantity
-    const currentQuantity = cart[productId] || 0;
-    cart[productId] = currentQuantity + quantity;
-    
-    // Save to Redis
-    await redis.hset('cart:guest', cart);
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      cart.push({ ...product, quantity: 1 });
+    }
     
     revalidatePath('/cart');
-    revalidatePath('/');
-    
-    return { 
-      success: true, 
-      message: `Added ${quantity} item(s) to cart` 
-    };
+    return { success: true, message: 'تمت الإضافة إلى السلة بنجاح' };
   } catch (error) {
-    console.error('Add to cart error:', error);
-    return { 
-      success: false, 
-      message: 'Failed to add to cart' 
-    };
+    console.error('Error adding to cart:', error);
+    return { success: false, message: 'حدث خطأ أثناء إضافة المنتج إلى السلة' };
   }
 }
 
 export async function removeFromCart(productId: string) {
-  try {
-    await redis.hdel('cart:guest', productId);
-    
-    revalidatePath('/cart');
-    
-    return { 
-      success: true, 
-      message: 'Removed from cart' 
-    };
-  } catch (error) {
-    console.error('Remove from cart error:', error);
-    return { 
-      success: false, 
-      message: 'Failed to remove from cart' 
-    };
-  }
+  cart = cart.filter(item => item.id !== productId);
+  revalidatePath('/cart');
+  return { success: true };
 }
 
-export async function updateCartQuantity(productId: string, quantity: number) {
-  try {
+export async function updateCartItemQuantity(productId: string, quantity: number) {
+  const item = cart.find(item => item.id === productId);
+  if (item) {
     if (quantity <= 0) {
       return removeFromCart(productId);
     }
-    
-    await redis.hset('cart:guest', { [productId]: quantity });
-    
-    revalidatePath('/cart');
-    
-    return { 
-      success: true, 
-      message: 'Cart updated' 
-    };
-  } catch (error) {
-    console.error('Update cart error:', error);
-    return { 
-      success: false, 
-      message: 'Failed to update cart' 
-    };
+    item.quantity = quantity;
   }
+  revalidatePath('/cart');
+  return { success: true };
+}
+
+export async function getCart() {
+  return cart;
 }
 
 export async function clearCart() {
-  try {
-    await redis.del('cart:guest');
-    
-    revalidatePath('/cart');
-    
-    return { 
-      success: true, 
-      message: 'Cart cleared' 
-    };
-  } catch (error) {
-    console.error('Clear cart error:', error);
-    return { 
-      success: false, 
-      message: 'Failed to clear cart' 
-    };
-  }
+  cart = [];
+  revalidatePath('/cart');
+  return { success: true };
 }

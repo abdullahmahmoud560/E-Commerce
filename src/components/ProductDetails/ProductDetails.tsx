@@ -1,10 +1,9 @@
-// src/components/ProductDetails/ProductDetailsClient.tsx
 'use client';
 
 import { useState, useTransition } from 'react';
 import { Star, Heart, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
-import { addToCart } from '@/actions/cart';
-import { toggleWishlist } from '@/actions/wishlist';
+import { addToCart } from '../../actions/cart';
+import { toggleWishlist } from '../../actions/wishlist';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 
@@ -44,13 +43,19 @@ export default function ProductDetailsClient({
     );
   };
 
+  // ✅ التعديل: تمرير كائن كامل بدل معاملين
   const handleAddToCart = () => {
     startTransition(async () => {
-      const result = await addToCart(product.id, quantity);
+      const result = await addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0] || '',
+      });
       if (result.success) {
-        toast.success('Added to cart!');
+        toast.success('تمت الإضافة إلى السلة بنجاح');
       } else {
-        toast.error(result.message || 'Failed to add to cart');
+        toast.error(result.message || 'فشلت إضافة المنتج إلى السلة');
       }
     });
   };
@@ -60,9 +65,9 @@ export default function ProductDetailsClient({
       const result = await toggleWishlist(product.id);
       if (result.success) {
         setIsInWishlist(result.inWishlist || false);
-        toast.success(result.message || 'Updated wishlist');
+        toast.success(result.message || 'تم تحديث قائمة الرغبات');
       } else {
-        toast.error(result.message || 'Failed to update wishlist');
+        toast.error(result.message || 'فشل تحديث قائمة الرغبات');
       }
     });
   };
@@ -72,10 +77,9 @@ export default function ProductDetailsClient({
       <div className="container-custom py-8">
         <div className="bg-white rounded-lg shadow-sm">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-            {/* Image Section - Left Side */}
+            {/* Image Section */}
             <div className="p-8 bg-white">
               <div className="space-y-4">
-                {/* Main Image */}
                 <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden">
                   <Image
                     src={product.images[currentImageIndex]}
@@ -84,8 +88,6 @@ export default function ProductDetailsClient({
                     className="object-contain"
                     priority
                   />
-                  
-                  {/* Navigation Buttons */}
                   {product.images.length > 1 && (
                     <>
                       <button
@@ -104,7 +106,7 @@ export default function ProductDetailsClient({
                   )}
                 </div>
 
-                {/* Thumbnail Images */}
+                {/* Thumbnails */}
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {product.images.map((image, index) => (
                     <button
@@ -129,28 +131,17 @@ export default function ProductDetailsClient({
               </div>
             </div>
 
-            {/* Product Info - Right Side */}
+            {/* Product Info */}
             <div className="p-8 bg-gray-50">
               <div className="space-y-6">
-                {/* Product Name */}
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {product.name}
-                </h1>
+                <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
+                <p className="text-gray-600 leading-relaxed">{product.description}</p>
 
-                {/* Product Description */}
-                <p className="text-gray-600 leading-relaxed">
-                  {product.description}
-                </p>
-
-                {/* Price Section */}
+                {/* Price */}
                 <div className="flex items-center gap-4">
-                  <div className="text-5xl font-bold text-gray-900">
-                    {product.price} EGP
-                  </div>
+                  <div className="text-5xl font-bold text-gray-900">{product.price} EGP</div>
                   {product.originalPrice && product.originalPrice > product.price && (
-                    <div className="text-2xl text-gray-400 line-through">
-                      {product.originalPrice} EGP
-                    </div>
+                    <div className="text-2xl text-gray-400 line-through">{product.originalPrice} EGP</div>
                   )}
                 </div>
 
@@ -158,13 +149,9 @@ export default function ProductDetailsClient({
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1">
                     <Star className="w-8 h-8 fill-yellow-400 text-yellow-400" />
-                    <span className="text-3xl font-bold text-gray-900">
-                      {product.rating}
-                    </span>
+                    <span className="text-3xl font-bold text-gray-900">{product.rating}</span>
                   </div>
-                  <span className="text-gray-500">
-                    ({product.reviewCount} reviews)
-                  </span>
+                  <span className="text-gray-500">({product.reviewCount} reviews)</span>
                 </div>
 
                 {/* Quantity Selector */}
@@ -178,9 +165,7 @@ export default function ProductDetailsClient({
                     >
                       -
                     </button>
-                    <div className="px-6 py-2 bg-white border-x-2 border-gray-300 font-semibold">
-                      {quantity}
-                    </div>
+                    <div className="px-6 py-2 bg-white border-x-2 border-gray-300 font-semibold">{quantity}</div>
                     <button
                       onClick={() => setQuantity(quantity + 1)}
                       className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-colors"
@@ -191,17 +176,17 @@ export default function ProductDetailsClient({
                   </div>
                 </div>
 
-                {/* Add to Cart Button */}
+                {/* Add to Cart */}
                 <button
                   onClick={handleAddToCart}
                   disabled={isPending || !product.inStock}
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-4 px-6 rounded-lg font-semibold text-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
                   <ShoppingCart className="w-6 h-6" />
-                  {product.inStock ? 'add to cart' : 'Out of Stock'}
+                  {product.inStock ? 'Add to Cart' : 'Out of Stock'}
                 </button>
 
-                {/* Wishlist Button */}
+                {/* Wishlist */}
                 <button
                   onClick={handleToggleWishlist}
                   disabled={isPending}
@@ -211,9 +196,7 @@ export default function ProductDetailsClient({
                       : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  <Heart
-                    className={`w-6 h-6 ${isInWishlist ? 'fill-red-500' : ''}`}
-                  />
+                  <Heart className={`w-6 h-6 ${isInWishlist ? 'fill-red-500' : ''}`} />
                   {isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
                 </button>
 
@@ -221,17 +204,11 @@ export default function ProductDetailsClient({
                 <div className="space-y-3 pt-6 border-t border-gray-200">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 font-medium">Category:</span>
-                    <span className="text-gray-900 font-semibold">
-                      {product.category}
-                    </span>
+                    <span className="text-gray-900 font-semibold">{product.category}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 font-medium">Availability:</span>
-                    <span
-                      className={`font-semibold ${
-                        product.inStock ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
+                    <span className={`font-semibold ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
                       {product.inStock ? 'In Stock' : 'Out of Stock'}
                     </span>
                   </div>

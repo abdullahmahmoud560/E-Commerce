@@ -1,4 +1,4 @@
-import { getCart } from '@/actions/cart';
+import { getCart } from '../../actions/cart';
 import CartItem from './CartItem';
 import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
@@ -6,7 +6,7 @@ import { ShoppingBag } from 'lucide-react';
 export default async function CartPage() {
   const cart = await getCart();
 
-  if (cart.items.length === 0) {
+  if (cart.length === 0) {
     return (
       <div className="py-12">
         <div className="container-custom">
@@ -32,8 +32,8 @@ export default async function CartPage() {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg border border-gray-200">
               <div className="divide-y divide-gray-200">
-                {cart.items.map((item) => (
-                  <CartItem key={item.product.id} item={item} />
+                {cart.map((item) => (
+                  <CartItem key={item.id} item={item} />
                 ))}
               </div>
             </div>
@@ -46,7 +46,7 @@ export default async function CartPage() {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span>${cart.total.toFixed(2)}</span>
+                  <span>${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
@@ -54,7 +54,7 @@ export default async function CartPage() {
                 </div>
                 <div className="border-t border-gray-200 pt-3 flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>${cart.total.toFixed(2)}</span>
+                  <span>${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
                 </div>
               </div>
 
