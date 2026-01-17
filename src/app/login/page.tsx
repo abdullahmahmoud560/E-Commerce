@@ -1,15 +1,14 @@
+// src/app/login/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Suspense } from 'react';
 import Header from '@/components/Header';
 import toast, { Toaster } from 'react-hot-toast';
 
-// Wrap the main component to handle search params
-function LoginForm() {
+export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -19,28 +18,13 @@ function LoginForm() {
   const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   const { data: session } = useSession();
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    if (showWelcome && userName) {
-      // Show welcome toast with user's name in green with lighter font
-      toast.success(`Welcome, ${userName}`, {
-        style: {
-          color: '#22c55e', // Green color for the text
-          fontWeight: 'normal', // Lighter font weight
-        },
-        duration: 1000, // Show for 1 second
-      });
-
-      // Redirect to home page after 1 second
-      const timer = setTimeout(() => {
-        router.push(callbackUrl);
-      }, 1000);
-
-      return () => clearTimeout(timer);
+    // Redirect if already logged in
+    if (session) {
+      router.push(callbackUrl);
     }
-  }, [showWelcome, userName, callbackUrl, router]);
+  }, [session, callbackUrl, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,35 +40,12 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        if (result.error === 'CredentialsSignin') {
-          setError('Invalid email or password');
-        } else {
-          setError(result.error);
-        }
-        setIsLoading(false);
-      } else {
-        // Force a session update and get user data
-        const session = await fetch('/api/auth/session');
-        const user = await session.json();
-        
-        if (user?.user?.name) {
-          setUserName(user.user.name);
-        } else {
-          // Fallback to email if name is not available
-          setUserName(email.split('@')[0]);
-        }
-        
-        // Force a session update to ensure the client has the latest session
-        await fetch('/api/auth/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ update: true }),
-        });
-        
-        setShowWelcome(true);
+        throw new Error(result.error);
       }
-    } catch {
-      setError('An error occurred. Please try again.');
+
+      // Success - the session will be updated and the useEffect will handle the redirect
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An error occurred');
       setIsLoading(false);
     }
   };
@@ -150,14 +111,5 @@ function LoginForm() {
         </div>
       </div>
     </div>
-  );
-}
-
-// Main page component wrapped in Suspense
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <LoginForm />
-    </Suspense>
   );
 }

@@ -4,6 +4,10 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from './prisma';
 import bcrypt from 'bcryptjs';
 
+// Ensure NEXTAUTH_URL is set in production
+const nextAuthUrl = process.env.NEXTAUTH_URL || 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -52,9 +56,12 @@ export const authOptions: AuthOptions = {
     }
   },
   debug: process.env.NODE_ENV === 'development',
+  // Use environment variable or fallback for development
+  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key-here',
+  // Use HTTP for development, HTTPS for production
+  useSecureCookies: process.env.NODE_ENV === 'production',
   pages: {
     signIn: '/login',
     error: '/login'
-  },
-  secret: process.env.NEXTAUTH_SECRET
+  }
 };
