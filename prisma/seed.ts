@@ -9,7 +9,11 @@ async function main() {
 
   try {
     // Check if User table exists
-    const tables = await prisma.$queryRaw`
+    interface TableInfo {
+      table_name: string;
+    }
+
+    const tables = await prisma.$queryRaw<TableInfo[]>`
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_schema = 'public' 
