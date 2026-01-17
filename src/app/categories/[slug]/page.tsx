@@ -1,8 +1,10 @@
-import { Suspense } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import ProductCard from '@/components/ProductCard';
 import { ProductCardSkeleton } from '@/components/Skeleton';
 import { getProducts } from '@/lib/products';
-import { redis } from '@/lib/redis';
+import { isInWishlist } from '@/actions/wishlist';
 import { notFound } from 'next/navigation';
 
 interface CategoryPageProps {
@@ -11,30 +13,47 @@ interface CategoryPageProps {
   };
 }
 
-const categoryMap: Record<string, string> = {
-  'baby-care': 'Baby Care',
-  'chicken-meat-fish': 'Chicken, Meat & Fish',
-  'cleaning-essentials': 'Cleaning Essentials',
-  'pet-care': 'Pet Care',
-  'fruits-vegetables': 'Fruits & Vegetables',
-  'cold-drinks-juices': 'Cold Drinks & Juices',
-  'dairy-bread-eggs': 'Dairy, Bread & Eggs',
-  'snack-munchies': 'Snack & Munchies',
-  'bakery-biscuits': 'Bakery & Biscuits',
-  'instant-food': 'Instant Food',
-  'tea-coffee-drinks': 'Tea, Coffee & Drinks',
-  'atta-rice-dal': 'Atta, Rice & Dal',
-};
+export default function CategoryPage({ params }: CategoryPageProps) {
+  const [products, setProducts] = useState<any[]>([]);
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-async function CategoryProducts({ category }: { category: string }) {
-  const allProducts = await getProducts();
-  const products = allProducts.filter(p => p.category === category);
-  const wishlistIds = await redis.smembers<string[]>('wishlist:guest') || [];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const allProducts = await getProducts();
+        const categoryProducts = allProducts.filter(p => p.category === params.slug);
+        
+        if (categoryProducts.length === 0) {
+          notFound();
+        }
 
-  if (products.length === 0) {
+        setProducts(categoryProducts);
+        
+        // Check wishlist status for each product
+        const wishlistStatus = await Promise.all(
+          categoryProducts.map((p: any) => isInWishlist(p.id))
+        );
+        setWishlistIds(categoryProducts
+          .filter((_: any, i: number) => wishlistStatus[i])
+          .map((p: any) => p.id)
+        );
+      } catch (error) {
+        console.error('Error loading category products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [params.slug]);
+
+  if (loading) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-600">No products found in this category.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <ProductCardSkeleton key={i} />
+        ))}
       </div>
     );
   }
@@ -42,39 +61,12 @@ async function CategoryProducts({ category }: { category: string }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {products.map((product) => (
-        <ProductCard 
-          key={product.id} 
+        <ProductCard
+          key={product.id}
           product={product}
           inWishlist={wishlistIds.includes(product.id)}
         />
       ))}
-    </div>
-  );
-}
-
-export default function CategoryPage({ params }: CategoryPageProps) {
-  const categoryName = categoryMap[params.slug];
-
-  if (!categoryName) {
-    notFound();
-  }
-
-  return (
-    <div className="py-12">
-      <div className="container-custom">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{categoryName}</h1>
-          <p className="text-gray-600">Browse products in {categoryName}</p>
-        </div>
-
-        <Suspense fallback={
-          <div className="grid grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)}
-          </div>
-        }>
-          <CategoryProducts category={categoryName} />
-        </Suspense>
-      </div>
     </div>
   );
 }

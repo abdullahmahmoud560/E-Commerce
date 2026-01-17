@@ -14,7 +14,6 @@
     "@prisma/client": "^4.16.2",
     "@prisma/internals": "^7.2.0",
     "@types/swiper": "^5.4.3",
-    "@upstash/redis": "^1.28.4",
     "bcryptjs": "^3.0.3",
     "lucide-react": "^0.376.0",
     "next": "14.2.3",
@@ -23,6 +22,7 @@
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
+    "sonner": "^2.0.7",
     "swiper": "^12.0.3"
   },
   "devDependencies": {

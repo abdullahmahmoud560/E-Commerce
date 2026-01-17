@@ -1,34 +1,31 @@
 // src/lib/products.ts
-import { redis } from './redis';
 import { Product } from '@/types';
+import { sampleProducts } from '@/data/products';
 
+// Get all products
 export async function getProducts(): Promise<Product[]> {
   try {
-    const data = await redis.get<string>('products');
-    if (!data) {
-      return [];
-    }
-    return JSON.parse(data as string);
+    return sampleProducts;
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
   }
 }
 
+// Get a single product by ID
 export async function getProductById(id: string): Promise<Product | null> {
   try {
-    const products = await getProducts();
-    return products.find(p => p.id === id) || null;
+    return sampleProducts.find(p => p.id === id) || null;
   } catch (error) {
     console.error('Error fetching product:', error);
     return null;
   }
 }
 
+// Get products by category
 export async function getProductsByCategory(category: string): Promise<Product[]> {
   try {
-    const products = await getProducts();
-    return products.filter(p => p.category === category);
+    return sampleProducts.filter(p => p.category === category);
   } catch (error) {
     console.error('Error fetching products by category:', error);
     return [];

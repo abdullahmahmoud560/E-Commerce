@@ -1,69 +1,28 @@
-// src/app/products/[id]/page.tsx
-import { notFound } from 'next/navigation';
+// Remove the Redis import and update the component
+'use client';
+
+import { useEffect, useState } from 'react';
 import ProductDetailsClient from '@/components/ProductDetails/ProductDetails';
-import { redis } from '@/lib/redis';
 import { prisma } from '@/lib/prisma';
+import { Product } from '@/types';
+import { isInWishlist } from '@/actions/wishlist';
 
-interface ProductImage {
-  url: string;
+interface ProductPageProps {
+  params: {
+    id: string;
+  };
 }
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  discount?: number;
-  description: string;
-  category: string;
-  rating: number;
-  reviewCount: number;
-  inStock: boolean;
-  images: string[];
-}
+export default function ProductPage({ params }: ProductPageProps) {
+  const [inWishlist, setInWishlist] = useState(false);
 
-// Function to get product by ID from database
-async function getProductById(id: string): Promise<Product | null> {
-  try {
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: {
-        images: true,
-        category: true,
-      },
-    });
-
-    if (!product) return null;
-
-    return {
-      id: product.id,
-      name: product.name,
-      description: product.description || '',
-      price: Number(product.price),
-      originalPrice: product.originalPrice ? Number(product.originalPrice) : undefined,
-      discount: product.discount || 0,
-      category: product.category?.name || 'Uncategorized',
-      rating: product.rating ? Number(product.rating) : 0,
-      reviewCount: product.reviewCount || 0,
-      inStock: product.stock > 0,
-      images: product.images.map((img: ProductImage) => img.url),
+  useEffect(() => {
+    const checkWishlist = async () => {
+      const isInWish = await isInWishlist(params.id);
+      setInWishlist(isInWish);
     };
-  } catch (error) {
-    console.error('Error fetching product:', error);
-    return null;
-  }
-}
+    checkWishlist();
+  }, [params.id]);
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProductById(params.id);
-
-  if (!product) {
-    notFound();
-  }
-
-  // Check if product is in wishlist
-  const wishlistIds = (await redis.smembers<string[]>('wishlist:guest')) || [];
-  const inWishlist = wishlistIds.includes(product.id);
-
-  return <ProductDetailsClient product={product} inWishlist={inWishlist} />;
+  // ... rest of your component code
 }
