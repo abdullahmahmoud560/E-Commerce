@@ -63,14 +63,24 @@ function LoginForm() {
         }
         setIsLoading(false);
       } else {
-        // Get the user's name from the session after successful login
-        const user = await fetch('/api/auth/session').then(res => res.json());
+        // Force a session update and get user data
+        const session = await fetch('/api/auth/session');
+        const user = await session.json();
+        
         if (user?.user?.name) {
           setUserName(user.user.name);
         } else {
           // Fallback to email if name is not available
           setUserName(email.split('@')[0]);
         }
+        
+        // Force a session update to ensure the client has the latest session
+        await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ update: true }),
+        });
+        
         setShowWelcome(true);
       }
     } catch {

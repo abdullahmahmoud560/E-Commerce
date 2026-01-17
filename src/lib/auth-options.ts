@@ -33,6 +33,10 @@ export const authOptions: AuthOptions = {
       }
     })
   ],
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -47,6 +51,9 @@ export const authOptions: AuthOptions = {
       return session;
     }
   },
+  debug: process.env.NODE_ENV === 'development',
+  // Use NEXTAUTH_URL in production, fallback to localhost in development
+  basePath: '/api/auth',
   pages: {
     signIn: '/login',
     error: '/login'
