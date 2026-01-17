@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import Header from '@/components/Header';
+import toast, { Toaster } from 'react-hot-toast';
 
 // Wrap the main component to handle search params
 function LoginForm() {
@@ -16,6 +17,30 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
+
+  const { data: session } = useSession();
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    if (showWelcome && userName) {
+      // Show welcome toast with user's name in green with lighter font
+      toast.success(`Welcome, ${userName}`, {
+        style: {
+          color: '#22c55e', // Green color for the text
+          fontWeight: 'normal', // Lighter font weight
+        },
+        duration: 1000, // Show for 1 second
+      });
+
+      // Redirect to home page after 1 second
+      const timer = setTimeout(() => {
+        router.push(callbackUrl);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showWelcome, userName, callbackUrl, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +63,15 @@ function LoginForm() {
         }
         setIsLoading(false);
       } else {
-        router.push(callbackUrl);
+        // Get the user's name from the session after successful login
+        const user = await fetch('/api/auth/session').then(res => res.json());
+        if (user?.user?.name) {
+          setUserName(user.user.name);
+        } else {
+          // Fallback to email if name is not available
+          setUserName(email.split('@')[0]);
+        }
+        setShowWelcome(true);
       }
     } catch {
       setError('An error occurred. Please try again.');
@@ -48,6 +81,7 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <Toaster position="top-center" />
       <Header />
 
       <div className="flex items-center justify-center py-16 px-4">

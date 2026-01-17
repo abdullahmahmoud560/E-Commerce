@@ -14,7 +14,7 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('الرجاء إدخال البريد الإلكتروني وكلمة المرور');
+          throw new Error('Please enter both email and password');
         }
 
         const user = await prisma.user.findUnique({
@@ -22,7 +22,7 @@ export const authOptions: AuthOptions = {
         });
 
         if (!user || !(await bcrypt.compare(credentials.password, user.password))) {
-          throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+          throw new Error('Incorrect email or password');
         }
 
         return {
