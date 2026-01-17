@@ -38,7 +38,6 @@ export default async function ProductPage({ params }: { params: { id: string } }
   let inWishlist = false;
   
   try {
-    // Check if product is in user's wishlist if user is logged in
     if (session?.user?.email) {
       const wishlistItem = await prisma.wishlistItem.findUnique({
         where: {

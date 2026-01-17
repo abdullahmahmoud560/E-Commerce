@@ -18,7 +18,6 @@ export async function GET(
       return NextResponse.json(JSON.parse(cachedProduct));
     }
 
-    // If not in cache, fetch from database
     const product = await getProductById(id);
     if (!product) {
       return new NextResponse('Product not found', { status: 404 });
